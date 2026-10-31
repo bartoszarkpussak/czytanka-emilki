@@ -395,8 +395,10 @@ const prevWorld=id=>WORLDS[widx(id)-1];
 function lettersUpTo(id){const out=[];for(const w of WORLDS){out.push(...w.letters);if(w.id===id)break}return out}
 function wordsUpTo(id){const out=[];for(const w of WORLDS){out.push(...w.words);if(w.id===id)break}return out}
 const totalBad=()=>Object.values(S.words).reduce((a,v)=>a+v.bad,0);
-const series2Open=()=>S.unlockAll||S.stars.w8>0;
-function isLocked(w){if(S.unlockAll)return false;if(w.train)return totalBad()<5&&!(S.stars.w8>0);const i=widx(w.id);if(i===0)return false;const p=WORLDS[i-1];return p.train?!series2Open():!(S.stars[p.id]>0)}
+/* Emilka: seria 2 pokazuje się dopiero, gdy każdy świat serii 1 ma gwiazdkę */
+const series1Done=()=>WORLDS.filter(w=>!w.series).every(w=>S.stars[w.id]>0);
+const series2Open=()=>S.unlockAll||series1Done();
+function isLocked(w){if(S.unlockAll)return false;if(w.train)return !series2Open();const i=widx(w.id);if(i===0)return false;const p=WORLDS[i-1];return p.train?!series2Open():!(S.stars[p.id]>0)}
 function lockMsg(w){if(w.train)return '🔁 Trening otworzy się po kilku misjach';const p=prevWorld(w.id);return p.train?'🔒 Zdobądź gwiazdkę na Balu Księżniczek':`🔒 Zdobądź gwiazdkę w świecie „${p.name}”`}
 const disp=w=>S.upper?w.toUpperCase():w;
 function sylHtml(w){let i=0;return w.split(' ').map(word=>word.split('-').map(s=>`<span class="${(i++)%2?'s2':'s1'}">${disp(s)}</span>`).join('')).join('<span class="gap"> </span>')}
@@ -425,7 +427,7 @@ function home(){
    ${(()=>{const card=w=>{const lock=isLocked(w);return `<button class="wcard ${w.boss||w.train?'boss':''} ${lock?'locked':''}" style="--wc:${w.c1};--wc2:${w.c2}" onclick="openWorld('${w.id}')">
       <div class="we">${w.emoji}</div><div><div class="wn">${w.name}</div><div class="wt">${w.train?(weakKeys().length?`${weakKeys().length} ${weakKeys().length===1?'rzecz':weakKeys().length<5?'rzeczy':'rzeczy'} do poćwiczenia`:w.tag):w.tag}</div><div class="wst">${starStr(S.stars[w.id]||0)}</div></div>${lock?'<span class="lock">🔒</span>':''}</button>`};
      const s1=WORLDS.filter(w=>!w.series),s2=WORLDS.filter(w=>w.series===2);
-     return `<div class="worlds">${s1.map(card).join('')}</div><h2 class="sh">✨ Seria 2: Kraina Mistrzyni<small>${series2Open()?'Nowe światy, bajka i nowe ubranka':'Otworzy się po gwiazdce na Balu Księżniczek'}</small></h2><div class="worlds">${s2.map(card).join('')}</div>`})()}
+     return `<div class="worlds">${s1.map(card).join('')}</div>${series2Open()?`<h2 class="sh">✨ Seria 2: Kraina Mistrzyni<small>Nowe światy, bajka i nowe ubranka</small></h2><div class="worlds">${s2.map(card).join('')}</div>`:''}`})()}
    <div class="foot">Zadania zrobione: ${S.solved} 💪<br>${HAS_SR?'🎤 Mikrofon działa: Emilka może czytać na głos.':'🎤 Ta przeglądarka nie słucha — rodzic ocenia czytanie przyciskami.'}
    <br><button class="parentbtn" onclick="parentGate()">👨‍👧 Dla rodzica</button></div></div>`;
 }
